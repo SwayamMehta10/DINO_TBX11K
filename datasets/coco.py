@@ -612,13 +612,26 @@ def get_aux_target_hacks_list(image_set, args):
 def build(image_set, args):
     root = Path(args.coco_path)
     mode = 'instances'
-    PATHS = {
-        "train": (root / "train2017", root / "annotations" / f'{mode}_train2017.json'),
-        "train_reg": (root / "train2017", root / "annotations" / f'{mode}_train2017.json'),
-        "val": (root / "val2017", root / "annotations" / f'{mode}_val2017.json'),
-        "eval_debug": (root / "val2017", root / "annotations" / f'{mode}_val2017.json'),
-        "test": (root / "test2017", root / "annotations" / 'image_info_test-dev2017.json' ),
-    }
+    
+    # Check if this is TBX11K dataset (has imgs folder instead of train2017/val2017)
+    if (root / "imgs").exists() and not (root / "train2017").exists():
+        # TBX11K dataset structure
+        PATHS = {
+            "train": (root / "imgs", root / "annotations" / "json" / "all_train.json"),
+            "train_reg": (root / "imgs", root / "annotations" / "json" / "all_train.json"),
+            "val": (root / "imgs", root / "annotations" / "json" / "all_val.json"),
+            "eval_debug": (root / "imgs", root / "annotations" / "json" / "all_val.json"),
+            "test": (root / "imgs", root / "annotations" / "json" / "all_test.json"),
+        }
+    else:
+        # Standard COCO dataset structure
+        PATHS = {
+            "train": (root / "train2017", root / "annotations" / f'{mode}_train2017.json'),
+            "train_reg": (root / "train2017", root / "annotations" / f'{mode}_train2017.json'),
+            "val": (root / "val2017", root / "annotations" / f'{mode}_val2017.json'),
+            "eval_debug": (root / "val2017", root / "annotations" / f'{mode}_val2017.json'),
+            "test": (root / "test2017", root / "annotations" / 'image_info_test-dev2017.json' ),
+        }
 
     # add some hooks to datasets
     aux_target_hacks_list = get_aux_target_hacks_list(image_set, args)
