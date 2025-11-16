@@ -56,8 +56,5 @@ use_ema = True
 ema_decay = 0.9997
 ema_epoch = 0
 
-# Dataset
-dataset_file = 'coco'  # Use COCO format loader
-
 # Backbone
 backbone = 'resnet50'  # Can also try 'swin_T' for better performance
