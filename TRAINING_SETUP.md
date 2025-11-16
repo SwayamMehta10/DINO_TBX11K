@@ -25,7 +25,7 @@ This guide provides complete instructions for training the DINO object detector 
 
 ### 1. Connect to ASU Sol Supercomputer
 ```bash
-ssh your_asurite@sol.asu.edu
+ssh your_asurite@login.sol.rc.asu.edu
 ```
 
 ### 2. Clone the Repository
@@ -37,21 +37,25 @@ cd DINO_TBX11K
 
 ### 3. Create Conda Environment
 ```bash
-# Load conda/mamba module
-module load mamba/latest
+interactive -t 60 -p htc
+$ module load cuda-12.6.1-gcc-12.1.0
+$ module load mamba/latest
+$ mamba create -n myENV_pytorch -c conda-forge python=3.12
+$ source activate myENV_pytorch
+$ pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
 
-# Create environment
-mamba create -n dino_env python=3.9 -y
-source activate dino_env
+# Install dependencies (install numpy first, then pycocotools from PyPI)
+pip install numpy cython
+pip install pycocotools scipy submitit termcolor addict yapf timm
 
-# Install PyTorch with CUDA support
-mamba install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia -y
-
-# Install dependencies
-pip install -r requirements.txt
-pip install pycocotools scipy
+# Install panopticapi (optional, for panoptic segmentation)
+pip install git+https://github.com/cocodataset/panopticapi.git
 
 # Build deformable attention operators
+# IMPORTANT: Load GCC 12 to match PyTorch's compiler requirements
+module load gcc-12.1.0-gcc-11.2.0
+gcc --version  # Verify GCC 12.1.0 is loaded
+
 cd models/dino/ops
 python setup.py build install
 cd ../../..
@@ -326,7 +330,21 @@ python setup.py build install
 cd ../../..
 
 # Reinstall requirements
-pip install -r requirements.txt --force-reinstall
+pip install numpy cython pycocotools scipy submitit termcolor addict yapf timm
+```
+
+### Issue 1a: GCC Version Error When Building Operators
+If you see "You're trying to build PyTorch with a too old version of GCC":
+```bash
+# Load GCC 12 to match PyTorch's compiler
+module load gcc-12.1.0
+gcc --version  # Should show 12.1.0
+
+# Rebuild operators
+cd models/dino/ops
+python setup.py clean --all  # Clean previous build attempts
+python setup.py build install
+cd ../../..
 ```
 
 ### Issue 2: CUDA Out of Memory
