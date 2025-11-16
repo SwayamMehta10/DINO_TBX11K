@@ -47,7 +47,7 @@ echo "================================================================"
 echo "Job ID: $SLURM_JOB_ID"
 echo "Node: $SLURM_NODELIST"
 echo "Start Time: $(date)"
-echo "GPUs: $CUDA_VISIBLE_DEVICES"
+echo "Allocated GPUs: $SLURM_GPUS_ON_NODE (CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES)"
 echo "================================================================"
 
 # Set paths

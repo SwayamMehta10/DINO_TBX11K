@@ -314,7 +314,12 @@ class SLConfig(object):
             based_on_style='pep8',
             blank_line_before_nested_class_or_def=True,
             split_before_expression_after_opening_paren=True)
-        text, _ = FormatCode(text, style_config=yapf_style, verify=True)
+        try:
+            # Try with verify parameter for older YAPF versions
+            text, _ = FormatCode(text, style_config=yapf_style, verify=True)
+        except TypeError:
+            # Fall back to without verify parameter for newer YAPF versions (>= 0.40.0)
+            text, _ = FormatCode(text, style_config=yapf_style)
 
         return text
     
