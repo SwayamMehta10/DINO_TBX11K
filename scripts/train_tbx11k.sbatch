@@ -82,7 +82,7 @@ fi
 PRETRAIN_MODEL="/scratch/$USER/dino_pretrained/checkpoint0011_4scale.pth"
 if [ -f "${PRETRAIN_MODEL}" ]; then
     echo "Using pretrained weights: ${PRETRAIN_MODEL}"
-    PRETRAIN_FLAG="--pretrain_model_path ${PRETRAIN_MODEL} --finetune_ignore label_enc class_embed dn_labelbook"
+    PRETRAIN_FLAG="--pretrain_model_path ${PRETRAIN_MODEL} --finetune_ignore label_enc class_embed dn_labelbook tgt_embed"
 else
     echo "No pretrained weights found, training from scratch"
     PRETRAIN_FLAG=""
