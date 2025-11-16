@@ -30,9 +30,11 @@ echo "================================================================"
 
 # Load required modules (adjust module names based on Sol configuration)
 module purge
+module load gcc-12.1.0-gcc-11.2.0
+module load cuda-12.6.1-gcc-12.1.0
 module load mamba/latest
 # Activate conda environment
-source activate dino_env
+source activate DINO_ENV
 
 # Set paths
 export PROJECT_ROOT=$SLURM_SUBMIT_DIR

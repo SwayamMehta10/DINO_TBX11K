@@ -19,8 +19,8 @@ cd /scratch/$USER
 ```bash
 # Load and create conda environment
 module load mamba/latest
-mamba create -n dino_env python=3.9 -y
-source activate dino_env
+mamba create -n DINO_ENV python=3.9 -y
+source activate DINO_ENV
 
 # Install dependencies
 mamba install pytorch torchvision pytorch-cuda=11.8 -c pytorch -c nvidia -y
