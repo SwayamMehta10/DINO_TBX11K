@@ -19,20 +19,15 @@
 # Supports automatic checkpoint resume for multi-session training
 # ============================================================================
 
-echo "================================================================"
-echo "DINO Training on TBX11K Dataset"
-echo "================================================================"
-echo "Job ID: $SLURM_JOB_ID"
-echo "Node: $SLURM_NODELIST"
-echo "Start Time: $(date)"
-echo "GPUs: $CUDA_VISIBLE_DEVICES"
-echo "================================================================"
-
 # Set Slurm environment variables for single-GPU training
 # These are required by util/misc.py init_distributed_mode()
 export SLURM_PROCID=0
 export SLURM_LOCALID=0
 export SLURM_NPROCS=1
+
+# Set PyTorch distributed environment variables for single-GPU
+export MASTER_ADDR=localhost
+export MASTER_PORT=29500
 
 # Load required modules (adjust module names based on Sol configuration)
 module purge
@@ -45,6 +40,15 @@ source activate DINO_ENV
 # Set NCCL settings for single-GPU distributed mode
 export NCCL_DEBUG=INFO
 export NCCL_ASYNC_ERROR_HANDLING=1
+
+echo "================================================================"
+echo "DINO Training on TBX11K Dataset"
+echo "================================================================"
+echo "Job ID: $SLURM_JOB_ID"
+echo "Node: $SLURM_NODELIST"
+echo "Start Time: $(date)"
+echo "GPUs: $CUDA_VISIBLE_DEVICES"
+echo "================================================================"
 
 # Set paths
 export PROJECT_ROOT=$SLURM_SUBMIT_DIR
