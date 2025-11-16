@@ -28,6 +28,12 @@ echo "Start Time: $(date)"
 echo "GPUs: $CUDA_VISIBLE_DEVICES"
 echo "================================================================"
 
+# Set Slurm environment variables for single-GPU training
+# These are required by util/misc.py init_distributed_mode()
+export SLURM_PROCID=0
+export SLURM_LOCALID=0
+export SLURM_NPROCS=1
+
 # Load required modules (adjust module names based on Sol configuration)
 module purge
 module load gcc-12.1.0-gcc-11.2.0
@@ -35,6 +41,10 @@ module load cuda-12.6.1-gcc-12.1.0
 module load mamba/latest
 # Activate conda environment
 source activate DINO_ENV
+
+# Set NCCL settings for single-GPU distributed mode
+export NCCL_DEBUG=INFO
+export NCCL_ASYNC_ERROR_HANDLING=1
 
 # Set paths
 export PROJECT_ROOT=$SLURM_SUBMIT_DIR
@@ -83,6 +93,7 @@ python main.py \
     --config_file ${CONFIG_FILE} \
     --coco_path ${DATA_PATH} \
     --output_dir ${OUTPUT_DIR} \
+    --num_workers 4 \
     --options \
         num_classes=4 \
         dn_labelbook_size=4 \

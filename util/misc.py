@@ -493,8 +493,8 @@ def init_distributed_mode(args):
         print(json.dumps(dict(os.environ), indent=2))
     elif 'SLURM_PROCID' in os.environ:
         args.rank = int(os.environ['SLURM_PROCID'])
-        args.gpu = args.local_rank = int(os.environ['SLURM_LOCALID'])
-        args.world_size = int(os.environ['SLURM_NPROCS'])
+        args.gpu = args.local_rank = int(os.environ.get('SLURM_LOCALID', 0))
+        args.world_size = int(os.environ.get('SLURM_NPROCS', os.environ.get('SLURM_NTASKS', 1)))
 
         print('world size: {}, world rank: {}, local rank: {}, device_count: {}'.format(args.world_size, args.rank, args.local_rank, torch.cuda.device_count()))
     else:
