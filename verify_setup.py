@@ -153,8 +153,8 @@ def check_scripts():
     project_root = Path(__file__).parent
     
     scripts = {
-        "Training script": "scripts/train_tbx11k_sol.sh",
-        "Evaluation script": "scripts/eval_tbx11k_sol.sh",
+        "Training script": "scripts/train_tbx11k.sbatch",
+        "Evaluation script": "scripts/eval_tbx11k.sbatch",
     }
     
     all_ok = True
@@ -246,8 +246,8 @@ def main():
         print("✓ All checks passed! Ready to train.")
         print("\nNext steps:")
         print("  1. Review QUICKSTART.md for quick commands")
-        print("  2. Edit scripts/train_tbx11k_sol.sh (set email)")
-        print("  3. Submit training: sbatch scripts/train_tbx11k_sol.sh")
+        print("  2. Edit scripts/train_tbx11k.sbatch (set email)")
+        print("  3. Submit training: sbatch scripts/train_tbx11k.sbatch")
     else:
         print("✗ Some checks failed. Please fix the issues above.")
         print("\nCommon fixes:")

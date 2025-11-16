@@ -43,13 +43,13 @@ wget https://github.com/IDEA-Research/DINO/releases/download/v0.1/checkpoint0011
 cd /scratch/$USER/DINO_TBX11K
 
 # Edit email in training script
-sed -i 's/your_email@asu.edu/YOUR_ASURITE@asu.edu/g' scripts/train_tbx11k_sol.sh
+sed -i 's/your_email@asu.edu/YOUR_ASURITE@asu.edu/g' scripts/train_tbx11k.sbatch
 
 # Create logs directory
 mkdir -p logs
 
 # Submit job
-sbatch scripts/train_tbx11k_sol.sh
+sbatch scripts/train_tbx11k.sbatch
 ```
 
 ### 5. Monitor Training
@@ -69,11 +69,11 @@ grep "Train Epoch" logs/train_tbx11k_JOBID.out | tail -5
 ### Run Evaluation
 ```bash
 # Edit checkpoint path in eval script
-nano scripts/eval_tbx11k_sol.sh
+nano scripts/eval_tbx11k.sbatch
 # Change CHECKPOINT_PATH to your trained model
 
 # Submit evaluation
-sbatch scripts/eval_tbx11k_sol.sh
+sbatch scripts/eval_tbx11k.sbatch
 
 # View results
 cat outputs/evaluation_*/log.txt
@@ -135,7 +135,7 @@ cd ../../..
 ### "Job exceeded walltime"
 Expected! Just resubmit - automatic resume will continue training:
 ```bash
-sbatch scripts/train_tbx11k_sol.sh
+sbatch scripts/train_tbx11k.sbatch
 ```
 
 ### "Cannot find checkpoint"

@@ -124,16 +124,22 @@ TBX11K has **3 tuberculosis detection classes**:
 mkdir -p /scratch/$USER/dino_pretrained
 cd /scratch/$USER/dino_pretrained
 
-# Download COCO pretrained ResNet-50 4-scale checkpoint
-# Option 1: From official DINO repo
-wget https://github.com/IDEA-Research/DINO/releases/download/v0.1/checkpoint0011_4scale.pth
+# Download COCO pretrained ResNet-50 4-scale checkpoint (12 epochs, 49.0 AP)
+# Official model zoo: https://github.com/IDEA-Research/DINO#model-zoo
 
-# Option 2: If URL changes, check the official repo:
-# https://github.com/IDEA-Research/DINO#model-zoo
+# Recommended: Use 4-scale checkpoint (faster training, good accuracy)
+pip install gdown
+gdown 1eeAHgu-fzp28PGdIjeLe-pzGPMG2r2G_  # 4-scale, 12 epochs, 49.0 AP
+
+# Alternative: 5-scale checkpoint (slightly better accuracy, slower)
+# gdown <file_id_for_5scale>  # 5-scale, 12 epochs, 49.4 AP
+
+# Note: Use 4-scale for faster training (23 FPS) with similar accuracy
+# Use 5-scale only if you need the extra 0.4 AP and can afford slower training
 ```
 
 ### 2. Modify Training Script
-Edit `scripts/train_tbx11k_sol.sh`:
+Edit `scripts/train_tbx11k.sbatch`:
 ```bash
 # Update email address (line 12)
 #SBATCH --mail-user=your_asurite@asu.edu
@@ -150,7 +156,7 @@ cd /scratch/$USER/DINO_TBX11K
 mkdir -p logs
 
 # Submit job
-sbatch scripts/train_tbx11k_sol.sh
+sbatch scripts/train_tbx11k.sbatch
 ```
 
 ### 4. Monitor Training
@@ -193,7 +199,7 @@ outputs/tbx11k_run_JOBID/
 ## Evaluation
 
 ### 1. Modify Evaluation Script
-Edit `scripts/eval_tbx11k_sol.sh`:
+Edit `scripts/eval_tbx11k.sbatch`:
 ```bash
 # Update email (line 12)
 #SBATCH --mail-user=your_asurite@asu.edu
@@ -205,7 +211,7 @@ export CHECKPOINT_PATH=${PROJECT_ROOT}/outputs/tbx11k_run_XXXXX/checkpoint_best_
 
 ### 2. Submit Evaluation Job
 ```bash
-sbatch scripts/eval_tbx11k_sol.sh
+sbatch scripts/eval_tbx11k.sbatch
 ```
 
 ### 3. View Results
@@ -281,14 +287,14 @@ The training script automatically detects existing checkpoints:
 
 1. **First Training Session**:
    ```bash
-   sbatch scripts/train_tbx11k_sol.sh
+   sbatch scripts/train_tbx11k.sbatch
    # Trains for ~7.5 hours, saves checkpoint at OUTPUT_DIR/checkpoint.pth
    ```
 
 2. **Continue Training** (before job ends or after timeout):
    ```bash
    # Same script detects checkpoint and resumes automatically
-   sbatch scripts/train_tbx11k_sol.sh
+   sbatch scripts/train_tbx11k.sbatch
    ```
 
 3. **Monitor Progress**:
@@ -361,7 +367,7 @@ data_aug_scales = [448, 480, 512]  # Smaller than default
 ```bash
 # This is expected for 50 epochs in 8 hours
 # Simply resubmit the same script - it will auto-resume
-sbatch scripts/train_tbx11k_sol.sh
+sbatch scripts/train_tbx11k.sbatch
 
 # Estimate progress: ~6-8 minutes per epoch on A100
 # 50 epochs * 7 min/epoch ≈ 5.8 hours (should fit in 8 hours)
@@ -446,10 +452,10 @@ _base_ = ['DINO_4scale_tbx11k.py']
 ### 3. Train on all_trainval and Evaluate on all_test
 ```bash
 # Training
-sbatch scripts/train_tbx11k_sol.sh  # with updated paths
+sbatch scripts/train_tbx11k.sbatch  # with updated paths
 
 # Evaluation (if test labels available)
-sbatch scripts/eval_tbx11k_sol.sh
+sbatch scripts/eval_tbx11k.sbatch
 ```
 
 ---
