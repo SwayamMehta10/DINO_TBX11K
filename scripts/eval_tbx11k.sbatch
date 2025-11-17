@@ -44,7 +44,7 @@ export CONFIG_FILE=${PROJECT_ROOT}/config/DINO/DINO_4scale_tbx11k.py
 
 # Checkpoint to evaluate - MODIFY THIS
 # Use either checkpoint_best_regular.pth or checkpoint_best_ema.pth
-export CHECKPOINT_PATH=${PROJECT_ROOT}/outputs/tbx11k_run_XXXXX/checkpoint_best_regular.pth
+export CHECKPOINT_PATH=${PROJECT_ROOT}/outputs/tbx11k_run_39543743/checkpoint_best_regular.pth
 
 # Create output directory
 mkdir -p ${OUTPUT_DIR}
