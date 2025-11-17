@@ -70,13 +70,14 @@ echo "================================================================"
 echo "Starting Evaluation..."
 echo "================================================================"
 
-# Run evaluation
+# Run evaluation (disable distributed mode for single GPU)
 python main.py \
     --config_file ${CONFIG_FILE} \
     --coco_path ${DATA_PATH} \
     --output_dir ${OUTPUT_DIR} \
     --eval \
     --resume ${CHECKPOINT_PATH} \
+    --world_size 1 \
     --options \
         num_classes=4 \
         dn_labelbook_size=4
