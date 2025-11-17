@@ -40,8 +40,8 @@ cd DINO_TBX11K
 interactive -t 60 -p htc
 module load cuda-12.6.1-gcc-12.1.0
 module load mamba/latest
-mamba create -n myENV_pytorch -c conda-forge python=3.12
-source activate myENV_pytorch
+mamba create -n DINO_ENV -c conda-forge python=3.12
+source activate DINO_ENV
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
 
 # Install dependencies (install numpy first, then pycocotools from PyPI)

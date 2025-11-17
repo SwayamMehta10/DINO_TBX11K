@@ -56,6 +56,10 @@ export DATA_PATH=${PROJECT_ROOT}/TBX11K
 export OUTPUT_DIR=${PROJECT_ROOT}/outputs/tbx11k_run_${SLURM_JOB_ID}
 export CONFIG_FILE=${PROJECT_ROOT}/config/DINO/DINO_4scale_tbx11k.py
 
+# Automatically find the most recent checkpoint directory
+# This finds the latest tbx11k_run_* directory (excluding current job)
+export PREV_CHECKPOINT_DIR=$(ls -td ${PROJECT_ROOT}/outputs/tbx11k_run_* 2>/dev/null | grep -v "tbx11k_run_${SLURM_JOB_ID}" | head -1)
+
 # Create output and log directories
 mkdir -p ${OUTPUT_DIR}
 mkdir -p ${PROJECT_ROOT}/logs
@@ -67,11 +71,22 @@ echo "Project Root: ${PROJECT_ROOT}"
 echo "Data Path: ${DATA_PATH}"
 echo "Output Directory: ${OUTPUT_DIR}"
 echo "Config File: ${CONFIG_FILE}"
+if [ ! -z "${PREV_CHECKPOINT_DIR}" ]; then
+    echo "Previous Checkpoint Directory: ${PREV_CHECKPOINT_DIR}"
+fi
 echo "================================================================"
 
 # Check if checkpoint exists for resume
-if [ -f "${OUTPUT_DIR}/checkpoint.pth" ]; then
-    echo "Found existing checkpoint, will resume training..."
+# Priority 1: Check if resuming from previous job (when PREV_CHECKPOINT_DIR is set and checkpoint exists)
+# Priority 2: Check current output directory (for same-job resume after restart)
+if [ ! -z "${PREV_CHECKPOINT_DIR}" ] && [ -f "${PREV_CHECKPOINT_DIR}/checkpoint.pth" ]; then
+    echo "Resuming from previous job checkpoint: ${PREV_CHECKPOINT_DIR}/checkpoint.pth"
+    RESUME_FLAG="--resume ${PREV_CHECKPOINT_DIR}/checkpoint.pth"
+    # Also copy previous checkpoints to new output directory to maintain history
+    echo "Copying previous checkpoints to new output directory..."
+    cp -r ${PREV_CHECKPOINT_DIR}/* ${OUTPUT_DIR}/
+elif [ -f "${OUTPUT_DIR}/checkpoint.pth" ]; then
+    echo "Found checkpoint in current output directory, will resume training..."
     RESUME_FLAG="--resume ${OUTPUT_DIR}/checkpoint.pth"
 else
     echo "No checkpoint found, starting fresh training..."
@@ -79,12 +94,17 @@ else
 fi
 
 # Optional: Download pretrained COCO weights if not exists
+# Only use pretrained weights if NOT resuming from checkpoint
 PRETRAIN_MODEL="/scratch/$USER/dino_pretrained/checkpoint0011_4scale.pth"
-if [ -f "${PRETRAIN_MODEL}" ]; then
+if [ -z "${RESUME_FLAG}" ] && [ -f "${PRETRAIN_MODEL}" ]; then
     echo "Using pretrained weights: ${PRETRAIN_MODEL}"
     PRETRAIN_FLAG="--pretrain_model_path ${PRETRAIN_MODEL} --finetune_ignore label_enc class_embed dn_labelbook tgt_embed"
 else
-    echo "No pretrained weights found, training from scratch"
+    if [ ! -z "${RESUME_FLAG}" ]; then
+        echo "Resuming from checkpoint - pretrained weights not needed"
+    else
+        echo "No pretrained weights found, training from scratch"
+    fi
     PRETRAIN_FLAG=""
 fi
 
