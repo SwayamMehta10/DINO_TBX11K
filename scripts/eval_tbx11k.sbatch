@@ -71,6 +71,14 @@ echo "Starting Evaluation..."
 echo "================================================================"
 
 # Run evaluation (disable distributed mode for single GPU)
+# Unset SLURM distributed environment variables to force single-GPU mode
+unset SLURM_PROCID
+unset SLURM_LOCALID
+unset SLURM_NTASKS
+unset WORLD_SIZE
+unset LOCAL_RANK
+unset RANK
+
 python main.py \
     --config_file ${CONFIG_FILE} \
     --coco_path ${DATA_PATH} \
