@@ -1,0 +1,33 @@
+{
+  "config_file": "/scratch/smehta90/DINO_TBX11K/config/DINO/DINO_4scale_tbx11k.py",
+  "options": {
+    "num_classes": 4,
+    "dn_labelbook_size": 4
+  },
+  "dataset_file": "coco",
+  "coco_path": "/scratch/smehta90/DINO_TBX11K/TBX11K",
+  "coco_panoptic_path": null,
+  "remove_difficult": false,
+  "fix_size": false,
+  "output_dir": "/scratch/smehta90/DINO_TBX11K/outputs/evaluation_39549848",
+  "note": "",
+  "device": "cuda",
+  "seed": 42,
+  "resume": "/scratch/smehta90/DINO_TBX11K/outputs/tbx11k_run_39543743/checkpoint_best_regular.pth",
+  "pretrain_model_path": null,
+  "finetune_ignore": null,
+  "start_epoch": 0,
+  "eval": true,
+  "num_workers": 10,
+  "test": false,
+  "debug": false,
+  "find_unused_params": false,
+  "save_results": false,
+  "save_log": false,
+  "world_size": 1,
+  "dist_url": "env://",
+  "rank": 0,
+  "local_rank": 0,
+  "amp": false,
+  "distributed": false
+}
