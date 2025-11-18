@@ -2,9 +2,9 @@
 #SBATCH -J dino_tbx11k_train
 #SBATCH -p public
 #SBATCH -q class
-#SBATCH --cpus-per-task=4
-#SBATCH --gres=gpu:a100:1
-#SBATCH --mem=32G
+#SBATCH --cpus-per-task=8
+#SBATCH --gres=gpu:a100:2
+#SBATCH --mem=64G
 #SBATCH --time=08:00:00
 #SBATCH --output=logs/train_tbx11k_%j.out
 #SBATCH --error=logs/train_tbx11k_%j.err
@@ -15,19 +15,19 @@
 # DINO Training Script for TBX11K on ASU Sol Supercomputer
 # ============================================================================
 # This script trains DINO object detector on TBX11K tuberculosis dataset
-# Designed for single A100 GPU with 8-hour walltime limit
+# Designed for 2x A100 GPUs with 8-hour walltime limit (480 GPU-minutes)
 # Supports automatic checkpoint resume for multi-session training
+# Resource-optimized: Leaves 480 GPU-minutes for other concurrent jobs
 # ============================================================================
 
-# Set Slurm environment variables for single-GPU training
+# Set Slurm environment variables for multi-GPU training
 # These are required by util/misc.py init_distributed_mode()
-export SLURM_PROCID=0
-export SLURM_LOCALID=0
-export SLURM_NPROCS=1
-
-# Set PyTorch distributed environment variables for single-GPU
+# SLURM will automatically set these, but we ensure they're correct
 export MASTER_ADDR=localhost
 export MASTER_PORT=29500
+
+# Note: SLURM_PROCID, SLURM_LOCALID, SLURM_NPROCS are automatically set by SLURM
+# when using multiple GPUs with srun or the job environment
 
 # Load required modules (adjust module names based on Sol configuration)
 module purge
@@ -112,21 +112,16 @@ echo "================================================================"
 echo "Starting Training..."
 echo "================================================================"
 
-# Run training
-python main.py \
+# Run training with 2 GPUs using PyTorch DistributedDataParallel
+# Each GPU processes batch_size=1, effective batch_size=2
+python -m torch.distributed.launch \
+    --nproc_per_node=2 \
+    --master_port=${MASTER_PORT} \
+    main.py \
     --config_file ${CONFIG_FILE} \
     --coco_path ${DATA_PATH} \
     --output_dir ${OUTPUT_DIR} \
     --num_workers 4 \
-    --options \
-        num_classes=4 \
-        dn_labelbook_size=4 \
-        epochs=50 \
-        lr_drop=40 \
-        save_checkpoint_interval=5 \
-        batch_size=1 \
-        use_ema=True \
-        ema_decay=0.9997 \
     ${RESUME_FLAG} \
     ${PRETRAIN_FLAG}
 

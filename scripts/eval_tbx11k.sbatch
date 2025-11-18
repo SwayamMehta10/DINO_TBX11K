@@ -86,6 +86,7 @@ python main.py \
     --eval \
     --resume ${CHECKPOINT_PATH} \
     --world_size 1 \
+    --save_results \
     --options \
         num_classes=4 \
         dn_labelbook_size=4
@@ -96,10 +97,50 @@ if [ $? -eq 0 ]; then
     echo "Evaluation completed successfully!"
     echo "================================================================"
     
-    # Display results if log file exists
+    # Parse and display COCO metrics in readable format
     if [ -f "${OUTPUT_DIR}/log.txt" ]; then
-        echo "Evaluation Results:"
-        cat ${OUTPUT_DIR}/log.txt
+        echo ""
+        echo "================================================================"
+        echo "COCO EVALUATION METRICS"
+        echo "================================================================"
+        
+        # Extract the test_coco_eval_bbox array from log.txt
+        python3 << 'EOF'
+import json
+import sys
+
+try:
+    with open("${OUTPUT_DIR}/log.txt", "r") as f:
+        log_data = json.load(f)
+    
+    if "test_coco_eval_bbox" in log_data:
+        stats = log_data["test_coco_eval_bbox"]
+        
+        print("\nBounding Box Detection Metrics:")
+        print("-" * 60)
+        print(f"AP @ IoU=0.50:0.95 (primary metric): {stats[0]:.3f}")
+        print(f"AP @ IoU=0.50:              {stats[1]:.3f}")
+        print(f"AP @ IoU=0.75:              {stats[2]:.3f}")
+        print(f"AP @ small:                 {stats[3]:.3f}")
+        print(f"AP @ medium:                {stats[4]:.3f}")
+        print(f"AP @ large:                 {stats[5]:.3f}")
+        print("-" * 60)
+        print(f"AR @ maxDets=1:             {stats[6]:.3f}")
+        print(f"AR @ maxDets=10:            {stats[7]:.3f}")
+        print(f"AR @ maxDets=100:           {stats[8]:.3f}")
+        print(f"AR @ small:                 {stats[9]:.3f}")
+        print(f"AR @ medium:                {stats[10]:.3f}")
+        print(f"AR @ large:                 {stats[11]:.3f}")
+        print("-" * 60)
+    else:
+        print("No COCO evaluation metrics found in log.txt")
+        
+except Exception as e:
+    print(f"Error parsing metrics: {e}")
+    print("\nRaw log content:")
+    with open("${OUTPUT_DIR}/log.txt", "r") as f:
+        print(f.read())
+EOF
     fi
 else
     echo "================================================================"
@@ -108,15 +149,41 @@ else
     exit 1
 fi
 
+echo ""
+echo "================================================================"
+echo "COMPUTING FROC METRICS"
+echo "================================================================"
+
+# Compute FROC metrics using the generated detection results
+if [ -f "${OUTPUT_DIR}/results0.json" ]; then
+    echo "Detection results found, computing FROC..."
+    
+    python compute_froc_metrics.py \
+        --coco_path ${DATA_PATH} \
+        --results_file ${OUTPUT_DIR}/results0.json \
+        --output_dir ${OUTPUT_DIR} \
+        --ann_file annotations/json/TBX11K_val.json \
+        --iou_threshold 0.5
+    
+    if [ $? -eq 0 ]; then
+        echo ""
+        echo "FROC metrics computed successfully!"
+        if [ -f "${OUTPUT_DIR}/froc_results.json" ]; then
+            echo "FROC results saved to: ${OUTPUT_DIR}/froc_results.json"
+        fi
+    else
+        echo "Warning: FROC computation failed"
+    fi
+else
+    echo "Warning: Detection results file not found at ${OUTPUT_DIR}/results0.json"
+    echo "Make sure --save_results flag is enabled in the evaluation command"
+fi
+
+echo ""
 echo "End Time: $(date)"
+echo "================================================================"
+echo "EVALUATION COMPLETE"
 echo "================================================================"
 echo "Results saved to: ${OUTPUT_DIR}"
 echo "Logs saved to: ${PROJECT_ROOT}/logs/eval_tbx11k_${SLURM_JOB_ID}.out"
-echo "================================================================"
-
-# Optional: Run FROC evaluation separately if needed
-echo ""
-echo "================================================================"
-echo "Note: To compute FROC metrics, use the compute_froc.py script"
-echo "with the evaluation results from ${OUTPUT_DIR}"
 echo "================================================================"
