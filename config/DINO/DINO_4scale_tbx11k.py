@@ -63,9 +63,14 @@ dn_box_noise_scale = 0.4
 dn_label_noise_ratio = 0.5
 embed_init_tgt = True
 
-# Loss weights (keep default COCO settings)
-# Note: Class imbalance is handled by the denoising training strategy
-# and hybrid matching, not by weighted loss terms
+# Loss weights - CRITICAL FIX for class imbalance
+# TBX11K has severe class imbalance (many healthy X-rays, few TB cases)
+# Focal loss alpha controls weighting between positive and negative examples
+# Default COCO: focal_alpha=0.25 (balanced dataset with 80 classes)
+# TBX11K fix: focal_alpha=0.75 (imbalanced medical dataset with 4 classes)
+# Higher alpha gives more weight to hard positives (TB cases)
+focal_alpha = 0.75  # Increased from 0.25 to handle class imbalance
+focal_gamma = 2.0   # Keep default
 cls_loss_coef = 1.0
 bbox_loss_coef = 5.0
 giou_loss_coef = 2.0
