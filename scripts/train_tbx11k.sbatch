@@ -114,7 +114,7 @@ echo "================================================================"
 
 # Run training with 2 GPUs using PyTorch DistributedDataParallel
 # Each GPU processes batch_size=1, effective batch_size=2
-python -m torch.distributed.launch \
+torchrun \
     --nproc_per_node=2 \
     --master_port=${MASTER_PORT} \
     main.py \
