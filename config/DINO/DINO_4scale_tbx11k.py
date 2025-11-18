@@ -76,5 +76,15 @@ use_ema = True
 ema_decay = 0.9998  # Faster adaptation than COCO's 0.9997
 ema_epoch = 0
 
-# Backbone
-backbone = 'resnet50'  # Can also try 'swin_T' for better performance
+# Backbone Selection
+# ResNet50: Fast training, good baseline (expected: 18-25% AP on TBX11K)
+# Swin-Tiny: Better performance but slower (expected: 20-28% AP, +1.3x training time)
+# Recommendation: Start with ResNet50, switch to Swin-Tiny if needed
+backbone = 'resnet50'
+
+# Pretrained Weights Impact:
+# - COCO pretrained ResNet50 provides strong low-level features (edges, textures, shapes)
+# - Transfer learning gives ~2-3x faster initial convergence vs random initialization
+# - Despite domain gap (natural images → X-rays), low-level features transfer well
+# - Classification heads are reinitialized (--finetune_ignore) for TB-specific classes
+# - Expected benefit: Faster convergence and +5-10% final AP improvement
