@@ -28,6 +28,9 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     except:
         need_tgt_for_training = False
 
+    # Get gradient accumulation steps (default=1 if not specified)
+    gradient_accumulation_steps = getattr(args, 'gradient_accumulation_steps', 1)
+
     model.train()
     criterion.train()
     metric_logger = utils.MetricLogger(delimiter="  ")
@@ -52,7 +55,9 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             loss_dict = criterion(outputs, targets)
             weight_dict = criterion.weight_dict
 
+            # Scale losses by accumulation steps for gradient accumulation
             losses = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
+            losses = losses / gradient_accumulation_steps
 
         # reduce losses over all GPUs for logging purposes
         loss_dict_reduced = utils.reduce_dict(loss_dict)
@@ -72,26 +77,40 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
         # amp backward function
         if args.amp:
-            optimizer.zero_grad()
+            if _cnt == 0:  # First batch in accumulation, zero gradients
+                optimizer.zero_grad()
             scaler.scale(losses).backward()
-            if max_norm > 0:
-                scaler.unscale_(optimizer)
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
-            scaler.step(optimizer)
-            scaler.update()
+            
+            # Only step optimizer after accumulating gradients
+            if (_cnt + 1) % gradient_accumulation_steps == 0:
+                if max_norm > 0:
+                    scaler.unscale_(optimizer)
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
+                scaler.step(optimizer)
+                scaler.update()
+                optimizer.zero_grad()  # Zero for next accumulation cycle
         else:
-            # original backward function
-            optimizer.zero_grad()
+            # original backward function with gradient accumulation
+            if _cnt == 0:  # First batch in accumulation, zero gradients
+                optimizer.zero_grad()
             losses.backward()
-            if max_norm > 0:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
-            optimizer.step()
+            
+            # Only step optimizer after accumulating gradients
+            if (_cnt + 1) % gradient_accumulation_steps == 0:
+                if max_norm > 0:
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
+                optimizer.step()
+                optimizer.zero_grad()  # Zero for next accumulation cycle
 
-        if args.onecyclelr:
-            lr_scheduler.step()
-        if args.use_ema:
-            if epoch >= args.ema_epoch:
-                ema_m.update(model)
+        # Update learning rate scheduler only after actual optimizer step
+        if (_cnt + 1) % gradient_accumulation_steps == 0:
+            if args.onecyclelr:
+                lr_scheduler.step()
+            if args.use_ema:
+                if epoch >= args.ema_epoch:
+                    ema_m.update(model)
+
+        _cnt += 1
 
         metric_logger.update(loss=loss_value, **loss_dict_reduced_scaled, **loss_dict_reduced_unscaled)
         if 'class_error' in loss_dict_reduced:
