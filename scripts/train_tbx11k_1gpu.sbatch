@@ -54,8 +54,22 @@ export DATA_PATH=${PROJECT_ROOT}/TBX11K
 export OUTPUT_DIR=${PROJECT_ROOT}/outputs/tbx11k_run_${SLURM_JOB_ID}
 export CONFIG_FILE=${PROJECT_ROOT}/config/DINO/DINO_4scale_tbx11k_1gpu.py
 
-# Find most recent checkpoint
-export PREV_CHECKPOINT_DIR=$(ls -td ${PROJECT_ROOT}/outputs/tbx11k_run_* 2>/dev/null | grep -v "tbx11k_run_${SLURM_JOB_ID}" | head -1)
+# Find most recent checkpoint from 1-GPU training sessions
+# We look for checkpoints that have gradient_accumulation_steps in their config
+# This ensures we only resume from compatible checkpoints
+export PREV_CHECKPOINT_DIR=""
+for dir in $(ls -td ${PROJECT_ROOT}/outputs/tbx11k_run_* 2>/dev/null | grep -v "tbx11k_run_${SLURM_JOB_ID}"); do
+    # Check if this checkpoint has gradient_accumulation_steps in config (1-GPU training)
+    if [ -f "${dir}/config_args_all.json" ] && grep -q "gradient_accumulation_steps" "${dir}/config_args_all.json" 2>/dev/null; then
+        if [ -f "${dir}/checkpoint.pth" ]; then
+            export PREV_CHECKPOINT_DIR="${dir}"
+            echo "Found compatible 1-GPU checkpoint: ${dir}"
+            break
+        fi
+    fi
+done
+
+# If no compatible checkpoint found, will start fresh with pretrained weights
 
 # Create directories
 mkdir -p ${OUTPUT_DIR}
@@ -102,6 +116,8 @@ fi
 echo "================================================================"
 echo "Starting Training with Gradient Accumulation..."
 echo "Effective Batch Size: 2 (1 per GPU × 2 accumulation steps)"
+echo "NOTE: Starting FRESH training (not resuming from old batch_size=1 checkpoint)"
+echo "Old checkpoint was incompatible due to different training strategy"
 echo "================================================================"
 
 # Run training with single GPU
