@@ -15,7 +15,6 @@ experiment-*
 .mypy_cache/*
 not_tracked_dir/
 .vscode
-logs
 jobs
 subs
 tmp
@@ -26,3 +25,4 @@ model_zoo_old/
 
 TBX11K/
 archive.zip
+*.out
