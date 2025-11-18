@@ -120,9 +120,13 @@ echo "NOTE: Starting FRESH training (not resuming from old batch_size=1 checkpoi
 echo "Old checkpoint was incompatible due to different training strategy"
 echo "================================================================"
 
-# Run training with single GPU
-# Config uses batch_size=1 with gradient accumulation to simulate batch_size=2
-python main.py \
+# Run training with single GPU using distributed launch
+# IMPORTANT: Even with 1 GPU, we need torch.distributed.launch to properly initialize
+# distributed environment, set up samplers, and ensure correct batch handling
+python -m torch.distributed.launch \
+    --nproc_per_node=1 \
+    --master_port=29500 \
+    main.py \
     --config_file ${CONFIG_FILE} \
     --coco_path ${DATA_PATH} \
     --output_dir ${OUTPUT_DIR} \
