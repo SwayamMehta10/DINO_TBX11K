@@ -214,15 +214,19 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
         if args.save_results:
             for target, output in zip(targets, results):
                 image_id = target['image_id'].item()
-                boxes = output['boxes'].cpu().numpy()  # [N, 4] in (x, y, w, h) format
+                boxes = output['boxes'].cpu().numpy()  # [N, 4] in (x1, y1, x2, y2) format
                 scores = output['scores'].cpu().numpy()  # [N]
                 labels = output['labels'].cpu().numpy()  # [N]
                 
                 for box, score, label in zip(boxes, scores, labels):
+                    # Convert from (x1, y1, x2, y2) to COCO format (x, y, w, h)
+                    x1, y1, x2, y2 = box
+                    coco_box = [float(x1), float(y1), float(x2 - x1), float(y2 - y1)]
+                    
                     all_predictions.append({
                         'image_id': int(image_id),
                         'category_id': int(label),
-                        'bbox': box.tolist(),  # [x, y, w, h]
+                        'bbox': coco_box,
                         'score': float(score)
                     })
 
