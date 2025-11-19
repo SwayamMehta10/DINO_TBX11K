@@ -86,10 +86,10 @@ python main.py \
     --eval \
     --resume ${CHECKPOINT_PATH} \
     --world_size 1 \
-    --save_results \
     --options \
         num_classes=4 \
-        dn_labelbook_size=4
+        dn_labelbook_size=4 \
+    --save_results
 
 # Check evaluation exit status
 if [ $? -eq 0 ]; then
@@ -105,12 +105,14 @@ if [ $? -eq 0 ]; then
         echo "================================================================"
         
         # Extract the test_coco_eval_bbox array from log.txt
-        python3 << 'EOF'
+        python3 << EOF
 import json
 import sys
+import os
 
+output_dir = os.environ.get('OUTPUT_DIR', '.')
 try:
-    with open("${OUTPUT_DIR}/log.txt", "r") as f:
+    with open(f"{output_dir}/log.txt", "r") as f:
         log_data = json.load(f)
     
     if "test_coco_eval_bbox" in log_data:
@@ -138,8 +140,11 @@ try:
 except Exception as e:
     print(f"Error parsing metrics: {e}")
     print("\nRaw log content:")
-    with open("${OUTPUT_DIR}/log.txt", "r") as f:
-        print(f.read())
+    try:
+        with open(f"{output_dir}/log.txt", "r") as f:
+            print(f.read())
+    except FileNotFoundError:
+        print(f"Log file not found at {output_dir}/log.txt")
 EOF
     fi
 else
