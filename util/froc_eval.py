@@ -81,10 +81,14 @@ def compute_froc(
         
         # Find best matching GT box
         max_iou_idx = ious.argmax()
-        max_iou = ious[max_iou_idx]
+        max_iou = ious[0, max_iou_idx]
         
         # Check if detection matches a GT box
-        if max_iou >= iou_threshold and det_label == gt_label_img[max_iou_idx]:
+        # Convert to scalar for comparison
+        gt_label_at_idx = int(gt_label_img[max_iou_idx])
+        det_label_int = int(det_label)
+        
+        if max_iou >= iou_threshold and det_label_int == gt_label_at_idx:
             if not gt_matched[img_idx][max_iou_idx]:
                 # True positive
                 tp[det_idx] = 1
