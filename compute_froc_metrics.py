@@ -23,6 +23,8 @@ def main():
                        help='Annotation file relative to coco_path')
     parser.add_argument('--iou_threshold', type=float, default=0.5,
                        help='IoU threshold for matching predictions to ground truth')
+    parser.add_argument('--max_fpi', type=float, default=8.0,
+                       help='Maximum FPI to evaluate (default: 8.0, use 2.0 for FPI < 2)')
     args = parser.parse_args()
     
     # Load ground truth
@@ -35,12 +37,22 @@ def main():
     coco_dt = coco_gt.loadRes(args.results_file)
     
     # Compute FROC metrics
-    print("\nComputing FROC metrics...")
+    print(f"\nComputing FROC metrics (FPI range: 0 to {args.max_fpi})...")
+    
+    # Generate FPI range based on max_fpi
+    # Use clinically relevant FPI values (>= 1.0) for medical imaging
+    if args.max_fpi <= 2.0:
+        fp_per_image_range = [1.0, 1.5, 2.0]
+    elif args.max_fpi <= 4.0:
+        fp_per_image_range = [1.0, 2.0, 3.0, 4.0]
+    else:
+        fp_per_image_range = [1.0, 2.0, 4.0, 8.0]
+    
     froc_results = compute_froc_from_coco_results(
         coco_gt, 
         coco_dt,
         iou_threshold=args.iou_threshold,
-        fp_per_image_range=[0.125, 0.25, 0.5, 1, 2, 4, 8]
+        fp_per_image_range=fp_per_image_range
     )
     
     # Print results
@@ -58,7 +70,9 @@ def main():
     # Print key metric for TBX11K paper
     print("\n" + "="*60)
     print("KEY METRIC FOR TBX11K PAPER:")
-    print(f"Sensitivity at FPI < 2: {froc_results['sensitivity_at_2fpi']:.4f}")
+    print(f"Sensitivity at FPI <= {args.max_fpi}: {froc_results['sensitivity_at_2fpi']:.4f}")
+    if args.max_fpi == 2.0:
+        print("(Evaluating FROC for FPI < 2.0 range only)")
     print("="*60)
 
 

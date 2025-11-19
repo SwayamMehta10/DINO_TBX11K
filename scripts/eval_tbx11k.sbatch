@@ -44,7 +44,7 @@ export CONFIG_FILE=${PROJECT_ROOT}/config/DINO/DINO_4scale_tbx11k.py
 
 # Checkpoint to evaluate - MODIFY THIS
 # Use either checkpoint_best_regular.pth or checkpoint_best_ema.pth
-export CHECKPOINT_PATH=${PROJECT_ROOT}/outputs/tbx11k_run_39543743/checkpoint_best_regular.pth
+export CHECKPOINT_PATH=${PROJECT_ROOT}/outputs/tbx11k_run_39722751/checkpoint_best_regular.pth
 
 # Create output directory
 mkdir -p ${OUTPUT_DIR}
@@ -163,7 +163,8 @@ if [ -f "${OUTPUT_DIR}/results0.json" ]; then
         --results_file ${OUTPUT_DIR}/results0.json \
         --output_dir ${OUTPUT_DIR} \
         --ann_file annotations/json/TBX11K_val.json \
-        --iou_threshold 0.5
+        --iou_threshold 0.5 \
+        --max_fpi 2.0
     
     if [ $? -eq 0 ]; then
         echo ""
