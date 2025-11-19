@@ -33,9 +33,47 @@ def main():
         print(f"Loading ground truth from: {ann_file}")
         coco_gt = COCO(str(ann_file))
         
+        print(f"Ground truth has {len(coco_gt.getImgIds())} images")
+        print(f"Ground truth has {len(coco_gt.getCatIds())} categories: {coco_gt.getCatIds()}")
+        print(f"Sample image IDs: {coco_gt.getImgIds()[:5]}")
+        
         # Load detection results
-        print(f"Loading detection results from: {args.results_file}")
+        print(f"\nLoading detection results from: {args.results_file}")
+        
+        # First check what's in the results file
+        with open(args.results_file, 'r') as f:
+            results_data = json.load(f)
+        
+        print(f"Results file has {len(results_data)} detections")
+        if len(results_data) > 0:
+            print(f"Sample detection: {results_data[0]}")
+            
+            # Check unique image IDs in results
+            result_img_ids = set(det['image_id'] for det in results_data)
+            print(f"Results have {len(result_img_ids)} unique image IDs")
+            print(f"Sample result image IDs: {list(result_img_ids)[:5]}")
+            
+            # Check which image IDs don't match
+            gt_img_ids = set(coco_gt.getImgIds())
+            missing_in_gt = result_img_ids - gt_img_ids
+            if missing_in_gt:
+                print(f"WARNING: {len(missing_in_gt)} image IDs in results not in ground truth!")
+                print(f"Sample missing IDs: {list(missing_in_gt)[:5]}")
+            
+            # Check category IDs
+            result_cat_ids = set(det['category_id'] for det in results_data)
+            print(f"Results have category IDs: {result_cat_ids}")
+            gt_cat_ids = set(coco_gt.getCatIds())
+            if not result_cat_ids.issubset(gt_cat_ids):
+                print(f"WARNING: Some category IDs in results not in ground truth!")
+                print(f"Invalid categories: {result_cat_ids - gt_cat_ids}")
+        else:
+            print("WARNING: Results file is empty!")
+            return
+        
         coco_dt = coco_gt.loadRes(args.results_file)
+        print("Successfully loaded detection results into COCO format")
+        
     except Exception as e:
         print(f"ERROR loading COCO data: {e}")
         import traceback
