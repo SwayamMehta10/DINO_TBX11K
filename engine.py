@@ -173,6 +173,7 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
 
     _cnt = 0
     output_state_dict = {} # for debug only
+    all_predictions = []  # Collect predictions for FROC computation
     for samples, targets in metric_logger.log_every(data_loader, 10, header, logger=logger):
         samples = samples.to(device)
 
@@ -208,6 +209,22 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
             target_sizes = torch.stack([t["size"] for t in targets], dim=0)
             results = postprocessors['segm'](results, outputs, orig_target_sizes, target_sizes)
         res = {target['image_id'].item(): output for target, output in zip(targets, results)}
+        
+        # Collect predictions in COCO format for FROC computation
+        if args.save_results:
+            for target, output in zip(targets, results):
+                image_id = target['image_id'].item()
+                boxes = output['boxes'].cpu().numpy()  # [N, 4] in (x, y, w, h) format
+                scores = output['scores'].cpu().numpy()  # [N]
+                labels = output['labels'].cpu().numpy()  # [N]
+                
+                for box, score, label in zip(boxes, scores, labels):
+                    all_predictions.append({
+                        'image_id': int(image_id),
+                        'category_id': int(label),
+                        'bbox': box.tolist(),  # [x, y, w, h]
+                        'score': float(score)
+                    })
 
         if coco_evaluator is not None:
             coco_evaluator.update(res)
@@ -297,19 +314,16 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
         coco_evaluator.summarize()
         
         # Save detection results in COCO format for FROC computation
-        if args.save_results and 'bbox' in coco_evaluator.coco_eval:
+        if args.save_results and len(all_predictions) > 0:
             import json
-            coco_dt = coco_evaluator.coco_eval['bbox'].cocoDt
-            results_json = []
-            for img_id in coco_dt.getImgIds():
-                ann_ids = coco_dt.getAnnIds(imgIds=[img_id])
-                anns = coco_dt.loadAnns(ann_ids)
-                results_json.extend(anns)
+            import os.path as osp
             
             json_path = osp.join(args.output_dir, 'results{}.json'.format(utils.get_rank()))
             with open(json_path, 'w') as f:
-                json.dump(results_json, f)
-            print(f"Saved {len(results_json)} detections to {json_path} for FROC computation")
+                json.dump(all_predictions, f, indent=2)
+            print(f"Saved {len(all_predictions)} detections to {json_path} for FROC computation")
+        elif args.save_results:
+            print("Warning: No predictions collected for FROC computation")
         
     panoptic_res = None
     if panoptic_evaluator is not None:
