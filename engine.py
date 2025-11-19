@@ -276,9 +276,9 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
 
     if args.save_results:
         import os.path as osp
+        import json
         
-        # output_state_dict['gt_info'] = torch.cat(output_state_dict['gt_info'])
-        # output_state_dict['res_info'] = torch.cat(output_state_dict['res_info'])
+        # Save pickle format (original format with detailed info)
         savepath = osp.join(args.output_dir, 'results-{}.pkl'.format(utils.get_rank()))
         print("Saving res to {}".format(savepath))
         torch.save(output_state_dict, savepath)
@@ -295,6 +295,21 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
     if coco_evaluator is not None:
         coco_evaluator.accumulate()
         coco_evaluator.summarize()
+        
+        # Save detection results in COCO format for FROC computation
+        if args.save_results and 'bbox' in coco_evaluator.coco_eval:
+            import json
+            coco_dt = coco_evaluator.coco_eval['bbox'].cocoDt
+            results_json = []
+            for img_id in coco_dt.getImgIds():
+                ann_ids = coco_dt.getAnnIds(imgIds=[img_id])
+                anns = coco_dt.loadAnns(ann_ids)
+                results_json.extend(anns)
+            
+            json_path = osp.join(args.output_dir, 'results{}.json'.format(utils.get_rank()))
+            with open(json_path, 'w') as f:
+                json.dump(results_json, f)
+            print(f"Saved {len(results_json)} detections to {json_path} for FROC computation")
         
     panoptic_res = None
     if panoptic_evaluator is not None:

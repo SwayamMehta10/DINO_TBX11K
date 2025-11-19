@@ -159,13 +159,15 @@ echo "================================================================"
 echo "COMPUTING FROC METRICS"
 echo "================================================================"
 
-# Compute FROC metrics using the generated detection results
-if [ -f "${OUTPUT_DIR}/results0.json" ]; then
+# FROC computation uses results extracted from COCO evaluator
+JSON_FILE="${OUTPUT_DIR}/results0.json"
+
+if [ -f "${JSON_FILE}" ]; then
     echo "Detection results found, computing FROC..."
     
     python compute_froc_metrics.py \
         --coco_path ${DATA_PATH} \
-        --results_file ${OUTPUT_DIR}/results0.json \
+        --results_file ${JSON_FILE} \
         --output_dir ${OUTPUT_DIR} \
         --ann_file annotations/json/TBX11K_val.json \
         --iou_threshold 0.5 \
@@ -181,8 +183,8 @@ if [ -f "${OUTPUT_DIR}/results0.json" ]; then
         echo "Warning: FROC computation failed"
     fi
 else
-    echo "Warning: Detection results file not found at ${OUTPUT_DIR}/results0.json"
-    echo "Make sure --save_results flag is enabled in the evaluation command"
+    echo "Warning: Detection results file not found at ${JSON_FILE}"
+    echo "Results are saved after COCO evaluation completes"
 fi
 
 echo ""
