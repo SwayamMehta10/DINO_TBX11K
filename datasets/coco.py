@@ -617,10 +617,10 @@ def build(image_set, args):
     if (root / "imgs").exists() and not (root / "train2017").exists():
         # TBX11K dataset structure
         PATHS = {
-            "train": (root / "imgs", root / "annotations" / "json" / "all_train.json"),
-            "train_reg": (root / "imgs", root / "annotations" / "json" / "all_train.json"),
-            "val": (root / "imgs", root / "annotations" / "json" / "all_val.json"),
-            "eval_debug": (root / "imgs", root / "annotations" / "json" / "all_val.json"),
+            "train": (root / "imgs", root / "annotations" / "json" / "TBX11K_train.json"),
+            "train_reg": (root / "imgs", root / "annotations" / "json" / "TBX11K_train.json"),
+            "val": (root / "imgs", root / "annotations" / "json" / "TBX11K_val.json"),
+            "eval_debug": (root / "imgs", root / "annotations" / "json" / "TBX11K_val.json"),
             "test": (root / "imgs", root / "annotations" / "json" / "all_test.json"),
         }
     else:
