@@ -532,7 +532,7 @@ def make_coco_transforms(image_set, fix_size=False, strong_aug=False, args=None)
             normalize,
         ])
 
-    if image_set in ['val', 'eval_debug', 'train_reg', 'test']:
+    if image_set in ['val', 'val_tb_only', 'eval_debug', 'train_reg', 'test']:
 
         if os.environ.get("GFLOPS_DEBUG_SHILONG", False) == 'INFO':
             print("Under debug mode for flops calculation only!!!!!!!!!!!!!!!!")
