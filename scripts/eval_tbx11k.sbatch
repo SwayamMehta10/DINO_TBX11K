@@ -16,6 +16,13 @@
 # ============================================================================
 # This script evaluates trained DINO model on TBX11K validation set
 # Computes standard COCO metrics (AP, AR) and FROC score (sensitivity at FPI<2)
+# 
+# Evaluation Modes:
+#   - Default: Evaluates on all 1800 validation images (200 TB + 1600 non-TB)
+#   - TB-only: Add --tb_only_eval flag to evaluate only on 200 TB-positive X-rays
+#              (matches paper's "TB X-rays only" evaluation protocol)
+#   - Class-agnostic: Add --class_agnostic_tb to merge all TB types into single class
+#                     (matches paper's class-agnostic TB detection protocol)
 # ============================================================================
 
 echo "================================================================"
@@ -89,7 +96,9 @@ python main.py \
     --options \
         num_classes=4 \
         dn_labelbook_size=4 \
-    --save_results
+    --save_results \
+    --tb_only_eval \
+    --class_agnostic_tb
 
 # Check evaluation exit status
 if [ $? -eq 0 ]; then

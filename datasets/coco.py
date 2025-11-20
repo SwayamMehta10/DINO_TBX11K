@@ -620,6 +620,7 @@ def build(image_set, args):
             "train": (root / "imgs", root / "annotations" / "json" / "TBX11K_train.json"),
             "train_reg": (root / "imgs", root / "annotations" / "json" / "TBX11K_train.json"),
             "val": (root / "imgs", root / "annotations" / "json" / "TBX11K_val.json"),
+            "val_tb_only": (root / "imgs", root / "annotations" / "json" / "TBX11K_val.json"),
             "eval_debug": (root / "imgs", root / "annotations" / "json" / "TBX11K_val.json"),
             "test": (root / "imgs", root / "annotations" / "json" / "all_test.json"),
         }
@@ -629,6 +630,7 @@ def build(image_set, args):
             "train": (root / "train2017", root / "annotations" / f'{mode}_train2017.json'),
             "train_reg": (root / "train2017", root / "annotations" / f'{mode}_train2017.json'),
             "val": (root / "val2017", root / "annotations" / f'{mode}_val2017.json'),
+            "val_tb_only": (root / "val2017", root / "annotations" / f'{mode}_val2017.json'),
             "eval_debug": (root / "val2017", root / "annotations" / f'{mode}_val2017.json'),
             "test": (root / "test2017", root / "annotations" / 'image_info_test-dev2017.json' ),
         }
@@ -650,6 +652,22 @@ def build(image_set, args):
             return_masks=args.masks,
             aux_target_hacks=aux_target_hacks_list,
         )
+    
+    # For TB-only evaluation, filter to images with TB annotations (categories 1, 2, 3)
+    # TBX11K validation set: 1800 total images (200 TB-positive, 1600 non-TB/healthy)
+    if image_set == 'val_tb_only':
+        from pycocotools.coco import COCO
+        coco = COCO(str(ann_file))
+        # Get image IDs that have TB annotations (categories 1, 2, 3)
+        tb_img_ids = set()
+        for ann in coco.dataset['annotations']:
+            if ann['category_id'] in [1, 2, 3]:  # ActiveTB, ObsoletePulmonaryTB, PulmonaryTB
+                tb_img_ids.add(ann['image_id'])
+        
+        # Filter dataset to only include TB-positive images
+        dataset.ids = [img_id for img_id in dataset.ids if img_id in tb_img_ids]
+        print(f"Filtered dataset to {len(dataset.ids)} TB-positive images (TB-only evaluation mode)")
+        print(f"Expected: ~200 TB-positive images in TBX11K validation set")
 
     return dataset
 

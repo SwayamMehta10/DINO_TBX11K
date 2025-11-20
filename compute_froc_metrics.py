@@ -23,8 +23,8 @@ def main():
                        help='Annotation file relative to coco_path')
     parser.add_argument('--iou_threshold', type=float, default=0.5,
                        help='IoU threshold for matching predictions to ground truth')
-    parser.add_argument('--max_fpi', type=float, default=8.0,
-                       help='Maximum FPI to evaluate (default: 8.0, use 2.0 for FPI < 2)')
+    parser.add_argument('--max_fpi', type=float, default=2.0,
+                       help='Maximum FPI to evaluate (default: 2.0 for paper compliance, use 8.0 for full range)')
     args = parser.parse_args()
     
     try:
@@ -114,10 +114,11 @@ def main():
         
         # Print key metric for TBX11K paper
         print("\n" + "="*60)
-        print("KEY METRIC FOR TBX11K PAPER:")
-        print(f"Sensitivity at FPI <= {args.max_fpi}: {froc_results['sensitivity_at_2fpi']:.4f}")
-        if args.max_fpi == 2.0:
-            print("(Evaluating FROC for FPI < 2.0 range only)")
+        print("KEY METRIC FOR TBX11K PAPER (TB Area Detection):")
+        print(f"Sensitivity at FPI <= 2.0: {froc_results['sensitivity_at_2fpi']:.4f}")
+        print("\nNote: This is the primary localization metric used in the paper.")
+        print("The paper evaluates TB detection using only TB X-rays in the test set.")
+        print("Use --tb_only_eval flag in main.py for TB-only evaluation.")
         print("="*60)
         
     except Exception as e:

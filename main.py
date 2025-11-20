@@ -58,6 +58,10 @@ def get_args_parser():
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--find_unused_params', action='store_true')
+    parser.add_argument('--tb_only_eval', action='store_true',
+                        help='Evaluate only on TB-positive images (200 images) instead of all validation images (1800 images)')
+    parser.add_argument('--class_agnostic_tb', action='store_true',
+                        help='Merge all TB categories into single TB class for evaluation (class-agnostic TB detection)')
 
     parser.add_argument('--save_results', action='store_true')
     parser.add_argument('--save_log', action='store_true')
@@ -165,7 +169,9 @@ def main(args):
     
 
     dataset_train = build_dataset(image_set='train', args=args)
-    dataset_val = build_dataset(image_set='val', args=args)
+    # Use TB-only validation set if requested (only images with TB annotations)
+    val_image_set = 'val_tb_only' if args.tb_only_eval else 'val'
+    dataset_val = build_dataset(image_set=val_image_set, args=args)
 
     if args.distributed:
         sampler_train = DistributedSampler(dataset_train)
@@ -253,7 +259,7 @@ def main(args):
     if args.eval:
         os.environ['EVAL_FLAG'] = 'TRUE'
         test_stats, coco_evaluator = evaluate(model, criterion, postprocessors,
-                                              data_loader_val, base_ds, device, args.output_dir, wo_class_error=wo_class_error, args=args)
+                                              data_loader_val, base_ds, device, args.output_dir, wo_class_error=wo_class_error, args=args, tb_only_eval=args.tb_only_eval, class_agnostic_tb=args.class_agnostic_tb)
         if args.output_dir:
             utils.save_on_master(coco_evaluator.coco_eval["bbox"].eval, output_dir / "eval.pth")
 
@@ -301,7 +307,7 @@ def main(args):
         # eval
         test_stats, coco_evaluator = evaluate(
             model, criterion, postprocessors, data_loader_val, base_ds, device, args.output_dir,
-            wo_class_error=wo_class_error, args=args, logger=(logger if args.save_log else None)
+            wo_class_error=wo_class_error, args=args, logger=(logger if args.save_log else None), tb_only_eval=args.tb_only_eval, class_agnostic_tb=args.class_agnostic_tb
         )
         map_regular = test_stats['coco_eval_bbox'][0]
         _isbest = best_map_holder.update(map_regular, epoch, is_ema=False)
@@ -323,7 +329,7 @@ def main(args):
         if args.use_ema:
             ema_test_stats, ema_coco_evaluator = evaluate(
                 ema_m.module, criterion, postprocessors, data_loader_val, base_ds, device, args.output_dir,
-                wo_class_error=wo_class_error, args=args, logger=(logger if args.save_log else None)
+                wo_class_error=wo_class_error, args=args, logger=(logger if args.save_log else None), tb_only_eval=args.tb_only_eval, class_agnostic_tb=args.class_agnostic_tb
             )
             log_stats.update({f'ema_test_{k}': v for k,v in ema_test_stats.items()})
             map_ema = ema_test_stats['coco_eval_bbox'][0]

@@ -138,7 +138,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
 
 @torch.no_grad()
-def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, output_dir, wo_class_error=False, args=None, logger=None):
+def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, output_dir, wo_class_error=False, args=None, logger=None, tb_only_eval=False, class_agnostic_tb=False):
     try:
         need_tgt_for_training = args.use_dn
     except:
@@ -146,6 +146,15 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
 
     model.eval()
     criterion.eval()
+    
+    # Log evaluation mode
+    if logger and tb_only_eval:
+        logger.info("Running evaluation in TB-only mode (200 TB-positive images)")
+    elif logger:
+        logger.info("Running evaluation on all images (1800 total: 200 TB + 1600 non-TB)")
+    
+    if logger and class_agnostic_tb:
+        logger.info("Class-agnostic TB evaluation: Merging all TB types into single 'TB' class")
 
     metric_logger = utils.MetricLogger(delimiter="  ")
     if not wo_class_error:
@@ -160,7 +169,7 @@ def evaluate(model, criterion, postprocessors, data_loader, base_ds, device, out
         useCats = True
     if not useCats:
         print("useCats: {} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!".format(useCats))
-    coco_evaluator = CocoEvaluator(base_ds, iou_types, useCats=useCats)
+    coco_evaluator = CocoEvaluator(base_ds, iou_types, useCats=useCats, class_agnostic_tb=class_agnostic_tb)
     # coco_evaluator.coco_eval[iou_types[0]].params.iouThrs = [0, 0.1, 0.5, 0.75]
 
     panoptic_evaluator = None

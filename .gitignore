@@ -26,3 +26,4 @@ model_zoo_old/
 TBX11K/
 archive.zip
 *.out
+results*.json

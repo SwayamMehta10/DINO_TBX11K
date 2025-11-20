@@ -20,9 +20,26 @@ from util.misc import all_gather
 
 
 class CocoEvaluator(object):
-    def __init__(self, coco_gt, iou_types, useCats=True):
+    def __init__(self, coco_gt, iou_types, useCats=True, class_agnostic_tb=False):
         assert isinstance(iou_types, (list, tuple))
         coco_gt = copy.deepcopy(coco_gt)
+        
+        # Class-agnostic TB evaluation: merge all TB categories (1,2,3) into single class
+        # This matches the paper's evaluation where all TB types are treated as one "TB" class
+        self.class_agnostic_tb = class_agnostic_tb
+        if class_agnostic_tb:
+            print("Class-agnostic TB evaluation: Merging categories 1, 2, 3 into single 'TB' class")
+            # Remap all TB annotations (cat 1,2,3) to category 1
+            for ann in coco_gt.dataset['annotations']:
+                if ann['category_id'] in [2, 3]:
+                    ann['category_id'] = 1
+            # Update category list
+            coco_gt.dataset['categories'] = [
+                {'id': 1, 'name': 'Tuberculosis', 'supercategory': 'TB'}
+            ]
+            # Recreate COCO index
+            coco_gt.createIndex()
+        
         self.coco_gt = coco_gt
 
         self.iou_types = iou_types
@@ -95,6 +112,10 @@ class CocoEvaluator(object):
                 labels = prediction["labels"].tolist()
             else:
                 labels = prediction["labels"]
+            
+            # Class-agnostic TB: remap all TB predictions (1,2,3) to category 1
+            if self.class_agnostic_tb:
+                labels = [1 if label in [1, 2, 3] else label for label in labels]
 
         
             try:
