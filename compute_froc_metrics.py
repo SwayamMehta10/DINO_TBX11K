@@ -84,14 +84,15 @@ def main():
         # Compute FROC metrics
         print(f"\nComputing FROC metrics (FPI range: 0 to {args.max_fpi})...")
         
-        # Generate FPI range based on max_fpi
-        # Use clinically relevant FPI values (>= 1.0) for medical imaging
-        if args.max_fpi <= 2.0:
-            fp_per_image_range = [1.0, 1.5, 2.0]
-        elif args.max_fpi <= 4.0:
-            fp_per_image_range = [1.0, 2.0, 3.0, 4.0]
-        else:
-            fp_per_image_range = [1.0, 2.0, 4.0, 8.0]
+        # Standard clinical FPI evaluation points for medical imaging
+        # Paper reports sensitivity at FPI<=2.0, but compute full curve for visualization
+        fp_per_image_range = [0.125, 0.25, 0.5, 1.0, 2.0]
+        
+        # Extend range if max_fpi > 2.0
+        if args.max_fpi > 2.0:
+            fp_per_image_range.extend([4.0, 8.0])
+        
+        print(f"Evaluating at FPI points: {fp_per_image_range}")
         
         froc_results = compute_froc_from_coco_results(
             coco_gt, 
