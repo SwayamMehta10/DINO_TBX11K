@@ -44,7 +44,7 @@ def plot_froc_curve(froc_results, output_path, title="FROC Curve - TB Detection"
     
     # Highlight FPI <= 2.0 (paper's primary metric)
     plt.axvline(x=2.0, color='red', linestyle='--', linewidth=1.5, 
-                label=f'FPI=2.0 (Paper metric)', alpha=0.7)
+                label=f'FPI=2.0', alpha=0.7)
     
     # Add grid
     plt.grid(True, alpha=0.3, linestyle='--')
@@ -55,7 +55,8 @@ def plot_froc_curve(froc_results, output_path, title="FROC Curve - TB Detection"
     plt.title(title, fontsize=14, fontweight='bold')
     
     # Set axis limits
-    plt.xlim([0, max(fp_per_image[-1], max(fpi_values) * 1.1)])
+    max_fpi = max(2.0, max(fpi_values) * 1.1) if len(fpi_values) > 0 else 8.0
+    plt.xlim([0, min(max_fpi, 8.0)])  # Limit to max FPI of 8.0
     plt.ylim([0, 1.05])
     
     # Add legend
